@@ -3,7 +3,7 @@ import { createServer } from "node:http";
 import { readFile } from "node:fs/promises";
 import { extname, resolve, sep } from "node:path";
 
-const root = resolve("dist");
+const root = resolve(process.env.PAGES_DIRECTORY || "dist");
 const base = "/no-swipe-club/";
 const types = {
   ".html": "text/html; charset=utf-8",

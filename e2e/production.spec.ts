@@ -38,6 +38,7 @@ test("le véritable artefact Pages charge React, ses assets et les routes intern
   expect((await request.get("./assets/missing.js")).status()).toBe(404);
   const html = await readFile("dist/index.html", "utf8");
   expect(html).not.toContain("/src/main.tsx");
+  expect(await readFile("index.html", "utf8")).toBe(html);
   expect(html).not.toContain("@vite/client");
   const js = html.match(/<script[^>]+src="([^"]+)"/g) || [];
   expect(js.length).toBeGreaterThan(0);

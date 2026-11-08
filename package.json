@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host 0.0.0.0",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b && vite build && node scripts/export-static.mjs",
     "test": "vitest run",
     "lint": "eslint .",
     "test:e2e": "playwright test",
@@ -23,6 +23,7 @@
   "devDependencies": {
     "@eslint/js": "^9.0.0",
     "@playwright/test": "^1.51.0",
+    "@types/node": "^24.19.2",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^4.4.0",

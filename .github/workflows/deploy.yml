@@ -29,6 +29,8 @@ jobs:
       - run: npm run build
       - name: Test the production artifact under the Pages prefix
         run: npm run test:production
+      - name: Test the repository-root publication fallback
+        run: PAGES_DIRECTORY=. npm run test:production
       - uses: actions/configure-pages@v5
         if: github.event_name != 'pull_request'
       - uses: actions/upload-pages-artifact@v3

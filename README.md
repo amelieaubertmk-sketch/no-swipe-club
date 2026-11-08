@@ -122,25 +122,36 @@ Le projet a été construit et testé localement ; aucun push, déploiement dist
 - Accessibilité vérifiée par navigation et tests fonctionnels, mais pas d’audit WCAG exhaustif ni de validation sur un iPhone physique.
 - Évolutions possibles : tests utilisateurs, audit d’accessibilité, catalogue d’événements vérifiés, export volontaire des données, service backend sécurisé avec choix explicite de synchronisation.
 
-## Diagnostic d’un écran blanc sur GitHub Pages
+## Correction du déploiement et de la 404 sur `main.tsx`
 
-L’adresse correspond au propriétaire réel du dépôt : `https://amelieaubertmk-sketch.github.io/no-swipe-club/` (et non `ameliaubertmk-sketch`). Dans Settings → Pages, conserver la source **GitHub Actions**.
+La console du site publié signalait une 404 sur `main.tsx`. Cela établit que le document servi chargeait l’entrée TypeScript source au lieu du JavaScript compilé. L’ancien `index.html` à la racine était précisément une entrée Vite de développement (`/src/main.tsx`) ; le servir tel quel avec GitHub Pages ne pouvait pas démarrer React. Le workflow versionné publiait déjà `dist`, mais la capture ne permet pas d’établir pourquoi GitHub servait encore le document source (ancienne publication, source effective ou cache).
 
-- Le `base` reste `/no-swipe-club/` et le routeur reste `HashRouter` : aucun changement de ces paramètres n’était nécessaire.
-- L’`index.html` source charge `/src/main.tsx` uniquement pour Vite. Le fichier **construit**, dans `dist/index.html`, doit charger `/no-swipe-club/assets/index-….js` et le CSS correspondant. Publier les sources directement ne fonctionne pas.
-- Le workflow construit l’application, teste le contenu réel de `dist/` avec un serveur statique sous ce préfixe, vérifie la configuration Pages, puis envoie **uniquement `dist/`** à l’action de déploiement.
-- La page source contient désormais un état de chargement et un message si le bundle échoue. Une limite d’erreur React évite également une racine vide en cas d’exception de rendu, sans effacer les données.
+La correction sépare désormais explicitement les deux entrées :
 
-Validation de l’artefact avant publication :
+- **`web/index.html`** : document source éditable pour Vite ; il charge `/src/main.tsx` via un alias Vite vers les sources. Le serveur de développement utilise `web` comme racine.
+- **`dist/index.html`** : document de production créé par Vite. Il charge `/no-swipe-club/assets/index-….js` et le CSS compilé, jamais `main.tsx`.
+- **`index.html` et `assets/` à la racine** : copie de production générée automatiquement par `npm run build`, à versionner. Elle évite de renvoyer une entrée TypeScript si GitHub sert la racine du dépôt. `scripts/export-static.mjs` refuse d’exporter un document source. Les anciens fichiers hachés sont conservés pour les navigateurs ayant une ancienne page en cache.
+
+Ne pas modifier manuellement le `index.html` généré ni les fichiers de `assets/`. Après toute modification de l’application, exécuter le build et inclure ces fichiers générés dans le commit. Les modifications du design et de l’application restent dans `src/`, celles du document source dans `web/index.html`.
+
+Le `base` reste `/no-swipe-club/` et le routage reste `HashRouter`. Il existe un seul workflow versionné, `.github/workflows/deploy.yml`. Celui-ci installe avec `npm ci`, teste, construit, vérifie les deux publications statiques, puis utilise `actions/upload-pages-artifact` avec **`path: dist` exclusivement**, suivi de `actions/deploy-pages`. Le job de déploiement possède `pages: write` et `id-token: write`. Aucun workflow versionné ne publie les sources.
+
+Validation reproductible :
 
 ```bash
+npm ci
+npm run lint
+npm test
 npm run build
-# Avec le navigateur Playwright installé :
+npm run test:e2e
 npm run test:production
-# Dans le cloud fourni :
-PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium npm run test:production
+PAGES_DIRECTORY=. npm run test:production
 ```
 
-Cette suite exécute les quatre parcours fonctionnels ainsi que deux tests spécifiques : téléchargement des JS/CSS/polices avec contrôle des chemins, types MIME, erreurs et rechargement d’une route interne ; puis simulation d’un bundle indisponible pour vérifier le message d’erreur. Le serveur de test ne transforme aucun fichier et renvoie 404 pour les fichiers absents, sans repli SPA.
+Dans le cloud fourni, préfixer les commandes Playwright avec `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium`. Ailleurs, installer Chromium avec `npx playwright install chromium`. `PAGES_DIRECTORY` choisit uniquement le dossier servi par le serveur de test, sans effet dans l’application.
 
-Lors du diagnostic, la version originale du build s’affichait déjà en production locale, sans erreur JavaScript ni asset manquant. L’accès au site public depuis l’environnement cloud a été refusé par le proxy (HTTP 403 lors du tunnel HTTPS). La cause exacte du symptôme observé sur le site distant n’a donc pas pu être confirmée. Le décalage dans l’adresse fournie est constaté ; une mauvaise publication ou une version en cache reste à vérifier avec la console et l’onglet Réseau du navigateur si le problème persiste à la bonne adresse après redéploiement.
+Les tests vérifient les parcours fonctionnels, les réponses HTTP et types MIME des JS/CSS/polices, les chemins sous `/no-swipe-club/assets/`, l’absence d’entrée TypeScript dans le HTML publié, l’égalité entre l’index racine et l’index construit, le rechargement d’une route interne et le message affiché lorsqu’un bundle manque. Le serveur statique ne transforme aucun fichier et renvoie 404 pour les fichiers absents.
+
+Après un déploiement vert, ouvrir `https://amelieaubertmk-sketch.github.io/no-swipe-club/` (avec « amelie »). Dans le code source de la page, chercher le script : il doit se terminer par un fichier `.js` dans `/no-swipe-club/assets/`. Dans l’onglet Réseau, ce fichier et le CSS doivent répondre 200 ; aucune requête `main.tsx` ne doit être envoyée. Si le navigateur conserve une ancienne page, recharger sans cache ou essayer une fenêtre privée.
+
+L’accès direct au site publié et à l’API Actions depuis l’environnement cloud était refusé par le proxy ; la réussite distante du redéploiement n’est pas vérifiable depuis cette machine tant que les autorisations réseau ne sont pas appliquées. Les tests locaux portent sur les véritables fichiers statiques construits, et non uniquement sur le serveur de développement.
