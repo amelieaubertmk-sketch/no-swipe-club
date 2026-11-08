@@ -1,1 +1,54 @@
-<!doctype html><html lang="fr"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><meta name="theme-color" content="#572B3B"/><meta name="description" content="Sept jours pour retrouver confiance et créer des occasions de rencontres dans la vraie vie. Sans swipe, à ton rythme."/><title>NO SWIPE CLUB — Less swiping. More living.</title></head><body><div id="root"></div><script type="module" src="/src/main.tsx"></script></body></html>
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#572B3B" />
+    <meta
+      name="description"
+      content="Sept jours pour retrouver confiance et créer des occasions de rencontres dans la vraie vie. Sans swipe, à ton rythme."
+    />
+    <title>NO SWIPE CLUB — Less swiping. More living.</title>
+  </head>
+  <body>
+    <div id="root">
+      <section
+        id="startup-status"
+        role="status"
+        style="
+          max-width: 640px;
+          margin: 12vh auto;
+          padding: 24px;
+          color: #572b3b;
+          background: #f7f2ea;
+          font:
+            18px/1.6 system-ui,
+            sans-serif;
+        "
+      >
+        <h1>NO SWIPE CLUB</h1>
+        <p id="startup-message">Chargement de votre expérience…</p>
+        <noscript
+          >Activez JavaScript dans votre navigateur pour utiliser
+          l’application.</noscript
+        >
+      </section>
+    </div>
+    <script>
+      // This fallback also works when the application bundle cannot be downloaded.
+      (function () {
+        window.addEventListener(
+          "error",
+          function () {
+            var message = document.getElementById("startup-message");
+            if (message)
+              message.textContent =
+                "Le chargement a échoué. Rechargez la page. Si le problème persiste, vérifiez que GitHub Pages publie le dossier dist généré par le workflow, puis signalez l’erreur de la console.";
+          },
+          true,
+        );
+      })();
+    </script>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

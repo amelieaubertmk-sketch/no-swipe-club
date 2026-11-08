@@ -1,6 +1,7 @@
 import { defineConfig } from "@playwright/test";
 export default defineConfig({
   testDir: "e2e",
+  testIgnore: ["**/production.spec.ts"],
   use: {
     baseURL: "http://127.0.0.1:5173/no-swipe-club/",
     viewport: { width: 390, height: 844 },

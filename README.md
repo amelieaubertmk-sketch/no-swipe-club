@@ -121,3 +121,26 @@ Le projet a été construit et testé localement ; aucun push, déploiement dist
 - Modifier les préférences régénère le plan. Si les missions changent, leurs statuts sont remis à zéro ; les compteurs d’actions restent conservés.
 - Accessibilité vérifiée par navigation et tests fonctionnels, mais pas d’audit WCAG exhaustif ni de validation sur un iPhone physique.
 - Évolutions possibles : tests utilisateurs, audit d’accessibilité, catalogue d’événements vérifiés, export volontaire des données, service backend sécurisé avec choix explicite de synchronisation.
+
+## Diagnostic d’un écran blanc sur GitHub Pages
+
+L’adresse correspond au propriétaire réel du dépôt : `https://amelieaubertmk-sketch.github.io/no-swipe-club/` (et non `ameliaubertmk-sketch`). Dans Settings → Pages, conserver la source **GitHub Actions**.
+
+- Le `base` reste `/no-swipe-club/` et le routeur reste `HashRouter` : aucun changement de ces paramètres n’était nécessaire.
+- L’`index.html` source charge `/src/main.tsx` uniquement pour Vite. Le fichier **construit**, dans `dist/index.html`, doit charger `/no-swipe-club/assets/index-….js` et le CSS correspondant. Publier les sources directement ne fonctionne pas.
+- Le workflow construit l’application, teste le contenu réel de `dist/` avec un serveur statique sous ce préfixe, vérifie la configuration Pages, puis envoie **uniquement `dist/`** à l’action de déploiement.
+- La page source contient désormais un état de chargement et un message si le bundle échoue. Une limite d’erreur React évite également une racine vide en cas d’exception de rendu, sans effacer les données.
+
+Validation de l’artefact avant publication :
+
+```bash
+npm run build
+# Avec le navigateur Playwright installé :
+npm run test:production
+# Dans le cloud fourni :
+PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium npm run test:production
+```
+
+Cette suite exécute les quatre parcours fonctionnels ainsi que deux tests spécifiques : téléchargement des JS/CSS/polices avec contrôle des chemins, types MIME, erreurs et rechargement d’une route interne ; puis simulation d’un bundle indisponible pour vérifier le message d’erreur. Le serveur de test ne transforme aucun fichier et renvoie 404 pour les fichiers absents, sans repli SPA.
+
+Lors du diagnostic, la version originale du build s’affichait déjà en production locale, sans erreur JavaScript ni asset manquant. L’accès au site public depuis l’environnement cloud a été refusé par le proxy (HTTP 403 lors du tunnel HTTPS). La cause exacte du symptôme observé sur le site distant n’a donc pas pu être confirmée. Le décalage dans l’adresse fournie est constaté ; une mauvaise publication ou une version en cache reste à vérifier avec la console et l’onglet Réseau du navigateur si le problème persiste à la bonne adresse après redéploiement.

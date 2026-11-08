@@ -9,7 +9,8 @@
     "test": "vitest run",
     "lint": "eslint .",
     "test:e2e": "playwright test",
-    "format": "prettier --write src e2e *.ts *.js *.json README.md .github/workflows/*.yml"
+    "format": "prettier --write src e2e *.ts *.js *.json README.md .github/workflows/*.yml",
+    "test:production": "playwright test --config playwright.production.config.ts"
   },
   "dependencies": {
     "@fontsource/dm-sans": "^5.2.0",
